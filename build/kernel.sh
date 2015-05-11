@@ -34,7 +34,7 @@ rm -f ${SETSDIR}/kernel-*-${ARCH}.txz
 git_clear ${SRCDIR}
 git_describe ${SRCDIR}
 
-BUILD_KERNEL="SMP"
+BUILD_KERNEL="SMP-HARDENEDBSD"
 
 # XXX move config to src.git
 cp ${TOOLSDIR}/config/current/${BUILD_KERNEL} ${SRCDIR}/sys/${ARCH}/conf/${BUILD_KERNEL}
