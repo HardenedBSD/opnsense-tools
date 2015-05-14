@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2014-2015 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2015 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,24 +29,22 @@ set -e
 
 . ./common.sh
 
-for ARG in ${@}; do
-	case ${ARG} in
-	stage)	# kernel and base build cleanup
-		setup_stage ${STAGEDIR}
+while getopts n:f:v: OPT; do
+	case ${OPT} in
+	f)
+		FLAVOUR=${OPTARG}
 		;;
-	obj)	# previous staging cleanup
-		setup_stage /usr/obj
+	n)
+		NAME=${OPTARG}
 		;;
-	env)	# kill config/build.conf
-		scrub_env
+	v)
+		VERSION=${OPTARG}
 		;;
-	images)
-		echo ">>> Removing ${IMAGESDIR}"
-		rm -rf ${IMAGESDIR}
-		;;
-	sets)
-		echo ">>> Removing ${SETSDIR}"
-		rm -rf ${SETSDIR}
+	*)
+		echo "Usage: configure.sh [-f flavour] [-n name] [-v version]" >&2
+		exit 1
 		;;
 	esac
 done
+
+setup_env "${NAME}" "${FLAVOUR}" "${VERSION}"

@@ -44,8 +44,45 @@ fi
 
 . "${configfile}"
 
+# important build settings
+export PRODUCT_VERSION=${PRODUCT_VERSION:-$(date '+%Y%m%d%H%M')}
+export PRODUCT_FLAVOUR=${PRODUCT_FLAVOUR:-"OpenSSL"}
+export PRODUCT_NAME=${PRODUCT_NAME:-"OPNsense"}
+
+# full name for easy use
+export PRODUCT_RELEASE="${PRODUCT_NAME}-${PRODUCT_VERSION}_${PRODUCT_FLAVOUR}"
+
+# target files
+export CDROM="${IMAGESDIR}/${PRODUCT_RELEASE}-cdrom-${ARCH}.iso"
+export SERIALIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-serial-${ARCH}.img"
+export VGAIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-vga-${ARCH}.img"
+export NANOIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-nano-${ARCH}.img"
+
+# bootstrap target directories
+mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
+
 # print environment to showcase all of our variables
-env
+env | sort
+
+scrub_env()
+{
+	rm -f ${BUILD_CONF}
+}
+
+setup_env()
+{
+	if [ -z "${1}" -a -z "${2}" -a -z "${3}" ]; then
+		return
+	fi
+
+	# clear previous env just in case
+	scrub_env
+
+	# these variables are allowed to steer the build
+	[ -n "${1}" ] && echo "export PRODUCT_NAME=${1}" >> ${BUILD_CONF}
+	[ -n "${2}" ] && echo "export PRODUCT_FLAVOUR=${2}" >> ${BUILD_CONF}
+	[ -n "${3}" ] && echo "export PRODUCT_VERSION=${3}" >> ${BUILD_CONF}
+}
 
 git_clear()
 {
@@ -177,7 +214,7 @@ extract_packages()
 
 install_packages()
 {
-	echo ">>> Setting up packages in ${1}..."
+	echo ">>> Installing packages in ${1}..."
 
 	BASEDIR=${1}
 	shift
