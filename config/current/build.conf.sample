@@ -2,11 +2,16 @@
 
 set -e
 
+# important build settings
+export PRODUCT_VERSION=${PRODUCT_VERSION:-$(date '+%Y%m%d%H%M')}
+export PRODUCT_FLAVOUR=${PRODUCT_FLAVOUR:-"HardenedBSD"}
+export PRODUCT_NAME=${PRODUCT_NAME:-"OPNsense"}
+
 # code reositories
-export TOOLSDIR="/usr/tools"
-export PORTSDIR="/usr/ports"
-export COREDIR="/usr/core"
-export SRCDIR="/usr/src"
+export TOOLSDIR="/tank/opnsense/tools"
+export PORTSDIR="/tank/opnsense/ports"
+export COREDIR="/tank/opnsense/core"
+export SRCDIR="/tank/opnsense/src"
 
 # misc. foo
 export CONFIG_PKG="/usr/local/etc/pkg/repos/${PRODUCT_NAME}.conf"
@@ -24,4 +29,4 @@ export IMAGESDIR="/tank/opnsense/images"
 export SETSDIR="/tank/opnsense/sets"
 
 # Custom object directory (optional)
-#export MAKEOBJDIRPREFIX="/usr/obj/opnsense"
+export MAKEOBJDIRPREFIX="/usr/obj/opnsense"
