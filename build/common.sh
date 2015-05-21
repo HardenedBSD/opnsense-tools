@@ -37,8 +37,13 @@ while getopts "c:" o; do
 	esac
 done
 
-if [ "${configfile}" = "" ] || [ ! -f "${configfile}" ]; then
+if [ "${configfile}" = "" ]; then
 	echo "Configuration file required (specify with -c)"
+	exit 1
+fi
+
+if [ ! -f "${configfile}" ]; then
+	echo "Configuration file ${configfile} not found."
 	exit 1
 fi
 
