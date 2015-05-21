@@ -4,14 +4,17 @@ set -e
 
 # important build settings
 export PRODUCT_VERSION=${PRODUCT_VERSION:-$(date '+%Y%m%d%H%M')}
-export PRODUCT_FLAVOUR=${PRODUCT_FLAVOUR:-"HardenedBSD"}
-export PRODUCT_NAME=${PRODUCT_NAME:-"OPNsense"}
+export PRODUCT_FLAVOUR=${PRODUCT_FLAVOUR:-"OpenSSL"}
+export PRODUCT_NAME="OPNsense"
+
+# full name for easy use
+export PRODUCT_RELEASE="${PRODUCT_NAME}-${PRODUCT_VERSION}_${PRODUCT_FLAVOUR}"
 
 # code reositories
-export TOOLSDIR="/tank/opnsense/tools"
-export PORTSDIR="/tank/opnsense/ports"
-export COREDIR="/tank/opnsense/core"
-export SRCDIR="/tank/opnsense/src"
+export TOOLSDIR="/usr/tools"
+export PORTSDIR="/usr/ports"
+export COREDIR="/usr/core"
+export SRCDIR="/usr/src"
 
 # misc. foo
 export CONFIG_PKG="/usr/local/etc/pkg/repos/${PRODUCT_NAME}.conf"
@@ -23,10 +26,29 @@ export TARGET_ARCH=${ARCH}
 export TARGETARCH=${ARCH}
 
 # define target directories
-export PACKAGESDIR="/tank/opnsense/packages"
-export STAGEDIR="/tank/opnsense/stage"
-export IMAGESDIR="/tank/opnsense/images"
-export SETSDIR="/tank/opnsense/sets"
+export PACKAGESDIR="/packages"
+export STAGEDIR="/usr/local/stage"
+export IMAGESDIR="/tmp/images"
+export SETSDIR="/tmp/sets"
 
-# Custom object directory (optional)
+# bootstrap target directories
+mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
+
+# target files
+export CDROM="${IMAGESDIR}/${PRODUCT_RELEASE}-cdrom-${ARCH}.iso"
+export SERIALIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-serial-${ARCH}.img"
+export VGAIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-vga-${ARCH}.img"
+export NANOIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-nano-${ARCH}.img"
+
 export MAKEOBJDIRPREFIX="/usr/obj/opnsense"
+
+memstick_populate_hook() {
+	sed -i '' -Ee 's:^ttyu0:ttyu0	"/usr/libexec/getty std.115200"	vt100	on  secure:' ${STAGEDIR}/etc/ttys
+	sed -i '' -Ee 's:^ttyu1:ttyu1	"/usr/libexec/getty std.115200"	vt100	on  secure:' ${STAGEDIR}/etc/ttys
+
+	echo 'hint.uart.0.flags=0x0' >> ${STAGEDIR}/boot/loader.conf.local
+	echo 'hint.uart.1.flags=0x10' >> ${STAGEDIR}/boot/loader.conf.local
+	echo 'comconsole_speed="115200"' >> ${STAGEDIR}/boot/loader.conf.local
+	echo 'comconsole_port="0x2F8"' >> ${STAGEDIR}/boot/loader.conf.local
+	echo 'console="comconsole"' >> ${STAGEDIR}/boot/loader.conf.local
+}
