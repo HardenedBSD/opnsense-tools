@@ -238,7 +238,7 @@ install_packages()
 
 bundle_packages()
 {
-	sh ./clean.sh packages
+	sh ./clean.sh -c ${configfile} packages
 
 	# rebuild expected FreeBSD structure
 	mkdir -p ${1}/pkg-repo/Latest

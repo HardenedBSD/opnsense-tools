@@ -29,7 +29,7 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-sh ./clean.sh -c ${configfile} base
+sh ./clean.sh ${@} base
 
 git_clear ${SRCDIR}
 git_describe ${SRCDIR}
