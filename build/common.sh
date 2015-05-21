@@ -44,6 +44,11 @@ fi
 
 . "${configfile}"
 
+if [ -z "${PRODUCT_NAME}" -o -z "${PRODUCT_FLAVOUR}" -o -z "${PRODUCT_VERSION}" ]; then
+	echo "Oops, please use the make targets to execute the build step." >&2
+	exit 1
+fi
+
 # full name for easy use
 export PRODUCT_RELEASE="${PRODUCT_NAME}-${PRODUCT_VERSION}_${PRODUCT_FLAVOUR}"
 
@@ -60,26 +65,6 @@ mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
 
 # print environment to showcase all of our variables
 env | sort
-
-scrub_env()
-{
-	rm -f ${BUILD_CONF}
-}
-
-setup_env()
-{
-	if [ -z "${1}" -a -z "${2}" -a -z "${3}" ]; then
-		return
-	fi
-
-	# clear previous env just in case
-	scrub_env
-
-	# these variables are allowed to steer the build
-	[ -n "${1}" ] && echo "export PRODUCT_NAME=${1}" >> ${BUILD_CONF}
-	[ -n "${2}" ] && echo "export PRODUCT_FLAVOUR=${2}" >> ${BUILD_CONF}
-	[ -n "${3}" ] && echo "export PRODUCT_VERSION=${3}" >> ${BUILD_CONF}
-}
 
 git_clear()
 {
@@ -248,7 +233,7 @@ install_packages()
 
 bundle_packages()
 {
-	rm -f ${SETSDIR}/packages-*_${PRODUCT_FLAVOUR}-${ARCH}.tar
+	sh ./clean.sh packages
 
 	# rebuild expected FreeBSD structure
 	mkdir -p ${1}/pkg-repo/Latest

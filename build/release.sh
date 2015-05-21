@@ -27,12 +27,7 @@
 
 set -e
 
-if [ -n "${1}" ]; then
-	# pull in a real release tag
-	PRODUCT_VERSION=${1}
-fi
-
-. ./common.sh
+. ./common.sh && $(${SCRUB_ARGS})
 
 if [ -n "${1}" ]; then
 	# make sure the all-encompassing package is a release, too
@@ -45,14 +40,13 @@ if [ -n "${1}" ]; then
 	fi
 fi
 
-rm -f ${SETSDIR}/release-*_${PRODUCT_FLAVOUR}-${ARCH}.tar
+sh ./clean.sh release images
 
 echo ">>> Creating images for ${PRODUCT_RELEASE}"
 
-./clean.sh images
-./memstick.sh
-./nano.sh
-./iso.sh
+sh ./memstick.sh
+sh ./nano.sh
+sh ./iso.sh
 
 setup_stage ${STAGEDIR}
 

@@ -27,26 +27,35 @@
 
 set -e
 
-. ./common.sh
+. ./common.sh && $(${SCRUB_ARGS})
 
 for ARG in ${@}; do
 	case ${ARG} in
-	stage)	# kernel and base build cleanup
+	stage)
 		setup_stage ${STAGEDIR}
 		;;
-	obj)	# previous staging cleanup
+	obj)
 		setup_stage /usr/obj
 		;;
-	env)	# kill config/build.conf
-		scrub_env
-		;;
 	images)
-		echo ">>> Removing ${IMAGESDIR}"
+		echo ">>> Removing images"
 		rm -rf ${IMAGESDIR}
 		;;
-	sets)
-		echo ">>> Removing ${SETSDIR}"
-		rm -rf ${SETSDIR}
+	kernel)
+		echo ">>> Removing kernel set"
+		rm -f ${SETSDIR}/kernel-*-${ARCH}.txz
+		;;
+	base)
+		echo ">>> Removing base set"
+		rm -f ${SETSDIR}/base-*-${ARCH}.txz
+		;;
+	packages)
+		echo ">>> Removing packages set"
+		rm -f ${SETSDIR}/packages-*_${PRODUCT_FLAVOUR}-${ARCH}.tar
+		;;
+	release)
+		echo ">>> Removing release set"
+		rm -f ${SETSDIR}/release-*_${PRODUCT_FLAVOUR}-${ARCH}.tar
 		;;
 	esac
 done
