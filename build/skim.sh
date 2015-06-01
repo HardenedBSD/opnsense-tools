@@ -27,14 +27,37 @@
 
 set -e
 
-PORT_LIST=/usr/tools/config/OPNsense/ports.conf
+. ./common.sh && $(${SCRUB_ARGS})
+
+export __MAKE_CONF=${PRODUCT_CONFIG}/make.conf
+PORT_LIST=${PRODUCT_CONFIG}/ports.conf
 FREEBSD=/usr/freebsd-ports
-OPNSENSE=/usr/ports
+OPNSENSE=${PORTSDIR}
+
+UNUSED=1
+USED=1
+
+for ARG in ${@}; do
+	case ${ARG} in
+	unused)
+		UNUSED=1
+		USED=
+		;;
+	used)
+		UNUSED=
+		USED=1
+		;;
+	esac
+done
+
+echo -n ">>> Gathering dependencies"
 
 while read PORT_NAME PORT_CAT PORT_OPT; do
 	if [ "$(echo ${PORT_NAME} | colrm 2)" = "#" ]; then
 		continue
 	fi
+
+	echo -n "."
 
 	PORT=${PORT_CAT}/${PORT_NAME}
 
@@ -82,7 +105,9 @@ while read PORT_NAME PORT_CAT PORT_OPT; do
 	done
 done < ${PORT_LIST}
 
-if [ "x${@}" = "xsync" ]; then
+echo "done"
+
+if [ -n "${UNUSED}" ]; then
 	for ENTRY in ${OPNSENSE}/*; do
 		ENTRY=${ENTRY##"${OPNSENSE}/"}
 
@@ -105,6 +130,8 @@ if [ "x${@}" = "xsync" ]; then
 				continue;
 			fi
 
+			echo ">>> Removing ${PORT}"
+
 			rm -fr ${OPNSENSE}/${PORT}
 		done
 
@@ -121,61 +148,63 @@ if [ "x${@}" = "xsync" ]; then
 			done
 
 			if [ ${UNUSED} = 0 ]; then
+				echo ">>> Skipping ${PORT}"
 				continue;
 			fi
+
+			echo ">>> Refreshing ${PORT}"
 
 			rm -fr ${OPNSENSE}/${PORT}
 			cp -r ${FREEBSD}/${PORT} ${OPNSENSE}/${PORT}
 		done
 	done
-
-	# ends here
-	exit 0
 fi
 
-for PORT in ${PORTS_CHANGED}; do
-	(clear && diff -ru ${OPNSENSE}/${PORT} ${FREEBSD}/${PORT} \
-	    2>/dev/null || true;) | less -r
+if [ -n "${USED}" ]; then
+	for PORT in ${PORTS_CHANGED}; do
+		(clear && diff -ru ${OPNSENSE}/${PORT} ${FREEBSD}/${PORT} \
+		    2>/dev/null || true;) | less -r
 
-	echo -n "replace ${PORT} [y/N]: "
-	read YN
-	case ${YN} in
-	[yY])
-		rm -fr ${OPNSENSE}/${PORT}
-		cp -a ${FREEBSD}/${PORT} ${OPNSENSE}/${PORT}
-		;;
-	esac
-done
+		echo -n "replace ${PORT} [y/N]: "
+		read YN
+		case ${YN} in
+		[yY])
+			rm -fr ${OPNSENSE}/${PORT}
+			cp -a ${FREEBSD}/${PORT} ${OPNSENSE}/${PORT}
+			;;
+		esac
+	done
 
-for ENTRY in ${FREEBSD}/*; do
-	ENTRY=${ENTRY##"${FREEBSD}/"}
+	for ENTRY in ${FREEBSD}/*; do
+		ENTRY=${ENTRY##"${FREEBSD}/"}
 
-	case "$(echo ${ENTRY} | colrm 2)" in
-	[[:upper:]])
-		;;
-	*)
-		continue
-		;;
-	esac
+		case "$(echo ${ENTRY} | colrm 2)" in
+		[[:upper:]])
+			;;
+		*)
+			continue
+			;;
+		esac
 
-	diff -rq ${OPNSENSE}/${ENTRY} ${FREEBSD}/${ENTRY} \
-	    > /dev/null || ENTRIES="${ENTRIES} ${ENTRY}"
-done
+		diff -rq ${OPNSENSE}/${ENTRY} ${FREEBSD}/${ENTRY} \
+		    > /dev/null || ENTRIES="${ENTRIES} ${ENTRY}"
+	done
 
-if [ -n "${ENTRIES}" ]; then
-	(clear && for ENTRY in ${ENTRIES}; do
-		diff -ru ${OPNSENSE}/${ENTRY} ${FREEBSD}/${ENTRY} \
-		    2>/dev/null || true;
-	done) | less -r
+	if [ -n "${ENTRIES}" ]; then
+		(clear && for ENTRY in ${ENTRIES}; do
+			diff -ru ${OPNSENSE}/${ENTRY} ${FREEBSD}/${ENTRY} \
+			    2>/dev/null || true;
+		done) | less -r
 
-	echo -n "replace Infrastructure [y/N]: "
-	read YN
-	case ${YN} in
-	[yY])
-		for ENTRY in ${ENTRIES}; do
-			rm -r ${OPNSENSE}/${ENTRY}
-			cp -a ${FREEBSD}/${ENTRY} ${OPNSENSE}/
-		done
-		;;
-	esac
+		echo -n "replace Infrastructure [y/N]: "
+		read YN
+		case ${YN} in
+		[yY])
+			for ENTRY in ${ENTRIES}; do
+				rm -r ${OPNSENSE}/${ENTRY}
+				cp -a ${FREEBSD}/${ENTRY} ${OPNSENSE}/
+			done
+			;;
+		esac
+	fi
 fi

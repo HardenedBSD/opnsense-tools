@@ -49,7 +49,14 @@ EOF
 
 makefs -t ffs -B little -o label=${LABEL} ${VGAIMG} ${STAGEDIR}
 
-echo "-S115200 -P" > ${STAGEDIR}/boot.config
+echo "-S115200 -D" > ${STAGEDIR}/boot.config
+
+cat > ${STAGEDIR}/boot/loader.conf << EOF
+boot_multicons="YES"
+boot_serial="YES"
+console="comconsole,vidconsole"
+comconsole_speed="115200"
+EOF
 
 sed -i '' -e 's:</system>:<enableserial/></system>:' \
     ${STAGEDIR}${CONFIG_XML}
