@@ -327,7 +327,7 @@ setup_integriforce()
 		-d /usr/sbin \
 		-d /usr/local/bin \
 		-d /usr/local/sbin \
-		>>  ${1}/usr/local/etc/secadm.rules
+		>  ${1}/usr/local/etc/secadm.rules
 
 	rm ${1}/sbin/integriforce.zsh
 	echo ">>> Integriforce set up complete."
