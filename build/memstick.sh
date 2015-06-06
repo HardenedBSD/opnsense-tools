@@ -38,6 +38,7 @@ setup_base ${STAGEDIR}
 setup_kernel ${STAGEDIR}
 setup_packages ${STAGEDIR} opnsense
 setup_mtree ${STAGEDIR}
+setup_integriforce ${STAGEDIR}
 
 echo ">>> Building memstick image(s)..."
 

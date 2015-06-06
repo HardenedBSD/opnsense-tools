@@ -310,3 +310,25 @@ setup_stage()
 	# revive directory for next run
 	mkdir -p ${1}
 }
+
+setup_integriforce()
+{
+	if [ ! ${INTEGRIFORCE} = "YES" ]; then
+		return 0
+	fi
+	echo ">>> Setting up Integriforce in ${1}. Hold on to your butts."
+	cp integriforce.zsh ${1}/sbin
+	chmod 755 ${1}/sbin/integriforce.zsh
+
+	chroot ${1} /sbin/integriforce.zsh \
+		-d /bin \
+		-d /sbin \
+		-d /usr/bin \
+		-d /usr/sbin \
+		-d /usr/local/bin \
+		-d /usr/local/sbin \
+		>>  ${1}/usr/local/etc/secadm.rules
+
+	rm ${1}/sbin/integriforce.zsh
+	echo ">>> Integriforce set up complete."
+}
