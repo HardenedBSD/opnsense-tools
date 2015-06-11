@@ -54,7 +54,7 @@ if [ -z "${PRODUCT_NAME}" -o -z "${PRODUCT_FLAVOUR}" -o -z "${PRODUCT_VERSION}" 
 	exit 1
 fi
 
-# full name for easy use
+# full name for easy use and actual config directory
 export PRODUCT_RELEASE="${PRODUCT_NAME}-${PRODUCT_VERSION}_${PRODUCT_FLAVOUR}"
 
 export PRODUCT_CONFIG="${TOOLSDIR}/config/${PRODUCT_NAME}"
@@ -65,18 +65,22 @@ mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
 # print environment to showcase all of our variables
 env | sort
 
-git_clear()
+git_checkout()
 {
-	# Reset the git repository into a known state by
-	# enforcing a hard-reset to HEAD (so you keep your
-	# selected commit, but no manual changes) and all
-	# unknown files are cleared (so it looks like a
-	# freshly cloned repository).
-
-	echo -n ">>> Resetting ${1}... "
-
-	git -C ${1} reset --hard HEAD
 	git -C ${1} clean -xdqf .
+	REPO_TAG=${2}
+	if [ -z "${REPO_TAG}" ]; then
+		git_tag ${1} ${PRODUCT_VERSION}
+	fi
+	git -C ${1} reset --hard ${REPO_TAG}
+}
+
+git_update()
+{
+	git -C ${1} fetch --all --prune
+	if [ -n "${2}" ]; then
+		git_checkout ${1} ${2}
+	fi
 }
 
 git_describe()
@@ -91,6 +95,38 @@ git_describe()
 
 	export REPO_VERSION=${VERSION}
 	export REPO_COMMENT=${COMMENT}
+}
+
+git_tag()
+{
+	# Fuzzy-match a tag and return it for the caller.
+
+	POOL=$(git -C ${1} tag | grep ^${2}\$ || true)
+	if [ -z "${POOL}" ]; then
+		VERSION=${2%.*}
+		FUZZY=${2##${VERSION}.}
+
+		for _POOL in $(git -C ${1} tag | grep ^${VERSION} | sort -r); do
+			_POOL=${_POOL##${VERSION}}
+			if [ -z "${_POOL}" ]; then
+				POOL=${VERSION}${_POOL}
+				break
+			fi
+			if [ ${_POOL##.} -lt ${FUZZY} ]; then
+				POOL=${VERSION}${_POOL}
+				break
+			fi
+		done
+	fi
+
+	if [ -z "${POOL}" ]; then
+		echo ">>> ${1} doesn't match tag ${2}"
+		exit 1
+	fi
+
+	echo ">>> ${1} matches tag ${2} -> ${POOL}"
+
+	export REPO_TAG=${POOL}
 }
 
 setup_clone()
@@ -235,14 +271,14 @@ bundle_packages()
 	sh ./clean.sh -c ${configfile} packages
 
 	# rebuild expected FreeBSD structure
-	mkdir -p ${1}/pkg-repo/Latest
-	mkdir -p ${1}/pkg-repo/All
+	mkdir -p ${1}${PACKAGESDIR}-new/Latest
+	mkdir -p ${1}${PACKAGESDIR}-new/All
 
 	# push packages to home location
-	cp ${1}${PACKAGESDIR}/All/* ${1}/pkg-repo/All
+	cp ${1}${PACKAGESDIR}/All/* ${1}${PACKAGESDIR}-new/All
 
 	# needed bootstrap glue when no packages are on the system
-	(cd ${1}/pkg-repo/Latest; ln -s ../All/pkg-*.txz pkg.txz)
+	(cd ${1}${PACKAGESDIR}-new/Latest; ln -s ../All/pkg-*.txz pkg.txz)
 
 	local SIGNARGS=
 	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh)" ]; then
@@ -251,11 +287,11 @@ bundle_packages()
 	fi
 
 	# generate index files
-	pkg repo ${1}/pkg-repo ${SIGNARGS}
+	pkg repo ${1}${PACKAGESDIR}-new/ ${SIGNARGS}
 
 	echo -n ">>> Creating package mirror set for ${PRODUCT_RELEASE}... "
 
-	tar -C ${STAGEDIR}/pkg-repo -cf \
+	tar -C ${STAGEDIR}${PACKAGESDIR}-new -cf \
 	    ${SETSDIR}/packages-${PRODUCT_VERSION}_${PRODUCT_FLAVOUR}-${ARCH}.tar .
 
 	echo "done"

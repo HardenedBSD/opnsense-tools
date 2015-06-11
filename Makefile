@@ -1,5 +1,5 @@
 STEPS=		base kernel ports core iso memstick nano \
-		regress clean release skim
+		regress clean release skim checkout
 .PHONY:		${STEPS}
 
 PAGER?=		less
@@ -19,6 +19,11 @@ NAME?=		OPNsense
 FLAVOUR?=	OpenSSL
 _VERSION!=	date '+%Y%m%d%H%M'
 VERSION?=	${_VERSION}
+PORTSREFDIR?=	/usr/freebsd-ports
+TOOLSDIR?=	/usr/tools
+PORTSDIR?=	/usr/ports
+COREDIR?=	/usr/core
+SRCDIR?=	/usr/src
 
 # A couple of meta-targets for easy use:
 
@@ -44,5 +49,7 @@ ${TARGET}: ${_TARGET}
 .for STEP in ${STEPS}
 ${STEP}:
 	@cd build && sh ./${.TARGET}.sh \
-	    -f ${FLAVOUR} -n ${NAME} -v ${VERSION} ${${STEP}_ARGS}
+	    -f ${FLAVOUR} -n ${NAME} -v ${VERSION} \
+	    -S ${SRCDIR} -P ${PORTSDIR} -T ${TOOLSDIR} \
+	    -C ${COREDIR} -R ${PORTSREFDIR} ${${STEP}_ARGS}
 .endfor

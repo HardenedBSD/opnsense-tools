@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2014-2015 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2015 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,14 +29,7 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-sh ./clean.sh ${@} base
-
-git_describe ${SRCDIR}
-
-MAKEARGS="SRCCONF=${PRODUCT_CONFIG}/src.conf COMPILER_TYPE=clang __MAKE_CONF="
-
-make -C${SRCDIR} -j${CPUS} buildworld ${MAKEARGS} NO_CLEAN=yes
-make -C${SRCDIR}/release obj ${MAKEARGS}
-make -C${SRCDIR}/release base.txz ${MAKEARGS}
-
-mv $(make -C${SRCDIR}/release -V .OBJDIR)/base.txz ${SETSDIR}/base-${REPO_VERSION}-${ARCH}.txz
+for GITDIR in ${SRCDIR} ${PORTSDIR} ${COREDIR}; do
+	echo ">>> Updating ${GITDIR}:"
+	git_update ${GITDIR} ${1}
+done

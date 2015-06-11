@@ -31,7 +31,6 @@ set -e
 
 sh ./clean.sh ${@} kernel
 
-git_clear ${SRCDIR}
 git_describe ${SRCDIR}
 
 BUILD_KERNEL="SMP-HARDENEDBSD"
