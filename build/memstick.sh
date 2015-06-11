@@ -62,6 +62,10 @@ EOF
 sed -i '' -e 's:</system>:<enableserial/></system>:' \
     ${STAGEDIR}${CONFIG_XML}
 
+if type filesystem_populate_hook > /dev/null 2>&1; then
+	filesystem_populate_hook
+fi
+
 if type memstick_populate_hook > /dev/null 2>&1; then
 	memstick_populate_hook
 else
