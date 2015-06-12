@@ -34,7 +34,7 @@ sh ./clean.sh ${@} kernel
 git_describe ${SRCDIR}
 
 # XXX move config to src.git
-cp ${PRODUCT_CONFIG}/${BUILD_KERNEL} ${SRCDIR}/sys/${ARCH}/conf/${BUILD_KERNEL}
+cp ${CONFIGDIR}/${BUILD_KERNEL} ${SRCDIR}/sys/${ARCH}/conf/${BUILD_KERNEL}
 
 MAKEARGS="TARGET_ARCH=${ARCH} KERNCONF=${BUILD_KERNEL}"
 
