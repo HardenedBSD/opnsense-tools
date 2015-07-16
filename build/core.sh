@@ -31,25 +31,30 @@ set -e
 
 git_describe ${COREDIR}
 
+CORE_NAME=$(make -C ${COREDIR} name)
+
 setup_stage ${STAGEDIR}
 setup_base ${STAGEDIR}
 setup_clone ${STAGEDIR} ${COREDIR}
 setup_clone ${STAGEDIR} ${PORTSDIR}
 
-while read PORT_NAME PORT_CAT PORT_OPT; do
-	if [ "$(echo ${PORT_NAME} | colrm 2)" = "#" -o -n "${PORT_OPT}" ]; then
+while read PORT_NAME PORT_CAT PORT_TYPE PORT_BROKEN; do
+	if [ "$(echo ${PORT_NAME} | colrm 2)" = "#" ]; then
 		continue
 	fi
-
+	if [ ${PORT_TYPE} != "run" ]; then
+		continue
+	fi
 	PORT_LIST="${PORT_LIST} ${PORT_NAME}"
 done < ${CONFIGDIR}/ports.conf
 
-extract_packages ${STAGEDIR} opnsense
+extract_packages ${STAGEDIR} ${CORE_NAME}
 install_packages ${STAGEDIR} gettext-tools ${PORT_LIST}
 
 chroot ${STAGEDIR} /bin/sh -es << EOF
-mkdir -p ${STAGEDIR}
-make -C ${COREDIR} DESTDIR=${STAGEDIR} install > ${STAGEDIR}/plist
+make -C ${COREDIR} DESTDIR=${STAGEDIR} install
+make -C ${COREDIR} DESTDIR=${STAGEDIR} scripts
+make -C ${COREDIR} DESTDIR=${STAGEDIR} manifest > ${STAGEDIR}/+MANIFEST
 
 for PKGFILE in \$(ls \${STAGEDIR}/+*); do
 	# fill in the blanks that come from the build
@@ -78,9 +83,8 @@ done
 sed -i "" -e "/%%REPO_DEPENDS%%/r ${STAGEDIR}/deps" ${STAGEDIR}/+MANIFEST
 sed -i "" -e '/%%REPO_DEPENDS%%/d' ${STAGEDIR}/+MANIFEST
 
-echo -n ">>> Creating custom package for ${COREDIR}... "
-pkg create -m ${STAGEDIR} -r ${STAGEDIR} -p ${STAGEDIR}/plist -o ${PACKAGESDIR}/All
-echo "done"
+make -C ${COREDIR} DESTDIR=${STAGEDIR} plist > ${STAGEDIR}/plist
 EOF
 
+create_packages ${STAGEDIR} ${CORE_NAME}
 bundle_packages ${STAGEDIR}

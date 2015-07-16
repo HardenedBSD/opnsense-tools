@@ -29,7 +29,7 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-for GITDIR in ${SRCDIR} ${PORTSDIR} ${COREDIR}; do
+for GITDIR in ${SRCDIR} ${PORTSDIR} ${COREDIR} ${PLUGINS}; do
 	echo ">>> Updating ${GITDIR}:"
 	git_update ${GITDIR} ${1}
 done

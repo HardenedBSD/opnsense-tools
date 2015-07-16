@@ -163,19 +163,12 @@ setup_chroot()
 setup_marker()
 {
 	# Let opnsense-update(8) know it's up to date
-	local MARKER="/usr/local/opnsense/version/os-update"
+	local MARKER="/usr/local/opnsense/version/os-update.${3}"
 
 	if [ ! -f ${1}${MARKER} ]; then
 		# first call means bootstrap the marker file
 		mkdir -p ${1}$(dirname ${MARKER})
 		echo ${2} > ${1}${MARKER}
-	else
-		# subsequent call means make sure version matches
-		# (base and kernel must be in sync at all times)
-		if [ $(cat ${1}${MARKER}) != ${2} ]; then
-			echo "base/kernel version mismatch"
-			exit 1
-		fi
 	fi
 }
 
@@ -201,7 +194,7 @@ setup_base()
 
 	BASE_VER=${BASE_SET##${SETSDIR}/base-}
 
-	setup_marker ${1} ${BASE_VER%%.txz}
+	setup_marker ${1} ${BASE_VER%%.txz} base
 }
 
 setup_kernel()
@@ -216,7 +209,7 @@ setup_kernel()
 
 	KERNEL_VER=${KERNEL_SET##${SETSDIR}/kernel-}
 
-	setup_marker ${1} ${KERNEL_VER%%.txz}
+	setup_marker ${1} ${KERNEL_VER%%.txz} kernel
 }
 
 extract_packages()
@@ -235,12 +228,15 @@ extract_packages()
 		tar -C ${BASEDIR}${PACKAGESDIR} -xpf ${PACKAGESET}
 	fi
 
-	if [ -n "${PKGLIST}" ]; then
-		for PKG in ${PKGLIST}; do
-			# clear out the ports that ought to be rebuilt
-			rm -f ${BASEDIR}${PACKAGESDIR}/All/${PKG}-*.txz
+	for PKG in ${PKGLIST}; do
+		# clear out the ports that ought to be rebuilt
+		for PKGFILE in ${BASEDIR}${PACKAGESDIR}/All/${PKG}-*.txz; do
+			PKGINFO=$(pkg info -F ${PKGFILE} | grep ^Name | awk '{ print $3; }')
+			if [ ${PKG} = ${PKGINFO} ]; then
+				rm ${PKGFILE}
+			fi
 		done
-	fi
+	done
 }
 
 install_packages()
@@ -278,6 +274,19 @@ install_packages()
 		pkg -c ${BASEDIR} annotate -qyA ${PKG} \
 		    repository ${PRODUCT_NAME}
 	done
+}
+
+create_packages()
+{
+	chroot ${1} /bin/sh -es << EOF
+echo -n ">>> Creating custom package for ${2}... "
+pkg create -m ${1} -r ${1} -p ${1}/plist -o ${PACKAGESDIR}/All
+echo "done"
+
+# clear the internal staging area and package files
+# XXX bad for debugging
+rm -rf ${1}
+EOF
 }
 
 bundle_packages()
@@ -344,7 +353,7 @@ setup_stage()
 {
 	echo ">>> Setting up stage in ${1}"
 
-	local MOUNTDIRS="/dev /usr/src /usr/ports /usr/core"
+	local MOUNTDIRS="/dev ${SRCDIR} ${PORTSDIR} ${COREDIR} ${PLUGINSDIR}"
 
 	# might have been a chroot
 	for DIR in ${MOUNTDIRS}; do

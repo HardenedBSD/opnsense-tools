@@ -51,7 +51,7 @@ done
 
 echo -n ">>> Gathering dependencies"
 
-while read PORT_NAME PORT_CAT PORT_OPT; do
+while read PORT_NAME PORT_CAT PORT_TYPE PORT_BROKEN; do
 	if [ "$(echo ${PORT_NAME} | colrm 2)" = "#" ]; then
 		continue
 	fi
@@ -65,7 +65,7 @@ while read PORT_NAME PORT_CAT PORT_OPT; do
 		SOURCE=${PORTSREFDIR}
 	fi
 
-	if [ "${PORT_OPT}" != "sync" ]; then
+	if [ ${PORT_TYPE} != "sync" ]; then
 		PORT_DEPS=$(echo ${PORT}; make -C ${SOURCE}/${PORT} \
 		    PORTSDIR=${SOURCE} all-depends-list | \
 		    awk -F"${SOURCE}/" '{print $2}')
@@ -164,12 +164,21 @@ if [ -n "${USED}" ]; then
 		(clear && diff -ru ${PORTSDIR}/${PORT} ${PORTSREFDIR}/${PORT} \
 		    2>/dev/null || true;) | less -r
 
-		echo -n "replace ${PORT} [y/N]: "
+		echo -n "replace ${PORT} [c/y/N]: "
 		read YN
 		case ${YN} in
 		[yY])
 			rm -fr ${PORTSDIR}/${PORT}
 			cp -a ${PORTSREFDIR}/${PORT} ${PORTSDIR}/${PORT}
+			;;
+		[cC])
+			rm -fr ${PORTSDIR}/${PORT}
+			cp -a ${PORTSREFDIR}/${PORT} ${PORTSDIR}/${PORT}
+			(cd ${PORTSDIR}; git add ${PORT})
+			(cd ${PORTSDIR}; git commit -m \
+"${PORT}: sync with upstream
+
+Taken from: FreeBSD")
 			;;
 		esac
 	done
@@ -195,7 +204,7 @@ if [ -n "${USED}" ]; then
 			    2>/dev/null || true;
 		done) | less -r
 
-		echo -n "replace Infrastructure [y/N]: "
+		echo -n "replace Framework [c/y/N]: "
 		read YN
 		case ${YN} in
 		[yY])
@@ -203,6 +212,17 @@ if [ -n "${USED}" ]; then
 				rm -r ${PORTSDIR}/${ENTRY}
 				cp -a ${PORTSREFDIR}/${ENTRY} ${PORTSDIR}/
 			done
+			;;
+		[cC])
+			for ENTRY in ${ENTRIES}; do
+				rm -r ${PORTSDIR}/${ENTRY}
+				cp -a ${PORTSREFDIR}/${ENTRY} ${PORTSDIR}/
+				(cd ${PORTSDIR}; git add ${ENTRY})
+			done
+			(cd ${PORTSDIR}; git commit -m \
+"Framework: sync with upstream
+
+Taken from: FreeBSD")
 			;;
 		esac
 	fi

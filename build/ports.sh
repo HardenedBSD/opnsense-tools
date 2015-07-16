@@ -37,8 +37,8 @@ setup_clone ${STAGEDIR} ${PORTSDIR}
 setup_clone ${STAGEDIR} ${SRCDIR}
 setup_chroot ${STAGEDIR}
 
-# bootstrap the stage with the avilable set (minus opnsense and args)
-extract_packages ${STAGEDIR} opnsense ${@}
+# bootstrap the stage with the avilable set (minus args)
+extract_packages ${STAGEDIR} ${@}
 install_packages ${STAGEDIR}
 clean_packages ${STAGEDIR}
 
@@ -65,9 +65,22 @@ else
 	make -C ${PORTSDIR}/ports-mgmt/pkg clean all install
 fi
 
-echo "${PORT_LIST}" | { while read PORT_NAME PORT_CAT PORT_OPT; do
-	if [ "\$(echo \${PORT_NAME} | colrm 2)" = "#" -o "\${PORT_OPT}" = "sync" ]; then
+echo "${PORT_LIST}" | { while read PORT_NAME PORT_CAT PORT_TYPE PORT_BROKEN; do
+	if [ "\$(echo \${PORT_NAME} | colrm 2)" = "#" ]; then
 		continue
+	fi
+	if [ \${PORT_TYPE} = "sync" ]; then
+		continue
+	fi
+	if [ -n "\${PORT_BROKEN}" ]; then
+		for PORT_QUIRK in \$(echo \${PORT_BROKEN} | tr ',' ' '); do
+			if [ \${PORT_QUIRK} = ${ARCH} ]; then
+				continue 2
+			fi
+			if [ \${PORT_QUIRK} = ${PRODUCT_FLAVOUR} ]; then
+				continue 2
+			fi
+		done
 	fi
 
 	echo -n ">>> Building \${PORT_NAME}... "

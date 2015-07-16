@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2014-2015 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2015 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,33 +29,29 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-for ARG in ${@}; do
-	case ${ARG} in
-	stage)
-		setup_stage ${STAGEDIR}
-		;;
-	source)
-		setup_stage /usr/obj
-		;;
-	images)
-		echo ">>> Removing images"
-		rm -rf ${IMAGESDIR}
-		;;
-	kernel)
-		echo ">>> Removing kernel set"
-		rm -f ${SETSDIR}/kernel-*-${ARCH}.txz
-		;;
-	base)
-		echo ">>> Removing base set"
-		rm -f ${SETSDIR}/base-*-${ARCH}.txz
-		;;
-	packages)
-		echo ">>> Removing packages set"
-		rm -f ${SETSDIR}/packages-*_${PRODUCT_FLAVOUR}-${ARCH}.tar
-		;;
-	release)
-		echo ">>> Removing release set"
-		rm -f ${SETSDIR}/release-*_${PRODUCT_FLAVOUR}-${ARCH}.tar
-		;;
-	esac
+PLUGINS=$(make -C ${PLUGINSDIR} list)
+PLUGIN_NAMES=
+
+for PLUGIN in ${PLUGINS}; do
+	PLUGIN_NAMES="${PLUGIN_NAMES} $(make -C ${PLUGINSDIR}/${PLUGIN} name)"
 done
+
+setup_stage ${STAGEDIR}
+setup_base ${STAGEDIR}
+setup_clone ${STAGEDIR} ${PLUGINSDIR}
+extract_packages ${STAGEDIR} ${PLUGIN_NAMES}
+install_packages ${STAGEDIR}
+
+for PLUGIN in ${PLUGINS}; do
+	chroot ${STAGEDIR} /bin/sh -es << EOF
+
+make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} install
+make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} scripts
+
+make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} manifest > ${STAGEDIR}/+MANIFEST
+make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} plist > ${STAGEDIR}/plist
+EOF
+	create_packages ${STAGEDIR} $(make -C ${PLUGINSDIR}/${PLUGIN} name)
+done
+
+bundle_packages ${STAGEDIR}
