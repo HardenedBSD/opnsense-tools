@@ -39,19 +39,13 @@ done
 setup_stage ${STAGEDIR}
 setup_base ${STAGEDIR}
 setup_clone ${STAGEDIR} ${PLUGINSDIR}
+
 extract_packages ${STAGEDIR} ${PLUGIN_NAMES}
-install_packages ${STAGEDIR}
 
 for PLUGIN in ${PLUGINS}; do
-	chroot ${STAGEDIR} /bin/sh -es << EOF
-
-make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} install
-make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} scripts
-
-make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} manifest > ${STAGEDIR}/+MANIFEST
-make -C ${PLUGINSDIR}/${PLUGIN} DESTDIR=${STAGEDIR} plist > ${STAGEDIR}/plist
-EOF
-	create_packages ${STAGEDIR} $(make -C ${PLUGINSDIR}/${PLUGIN} name)
+	PLUGIN_DEPENDS=$(make -C ${PLUGINSDIR}/${PLUGIN} depends)
+	install_packages ${STAGEDIR} ${PLUGIN_DEPENDS}
+	custom_packages ${STAGEDIR} ${PLUGINSDIR}/${PLUGIN}
 done
 
 bundle_packages ${STAGEDIR}

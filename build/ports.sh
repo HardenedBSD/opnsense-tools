@@ -65,11 +65,8 @@ else
 	make -C ${PORTSDIR}/ports-mgmt/pkg clean all install
 fi
 
-echo "${PORT_LIST}" | { while read PORT_NAME PORT_CAT PORT_TYPE PORT_BROKEN; do
-	if [ "\$(echo \${PORT_NAME} | colrm 2)" = "#" ]; then
-		continue
-	fi
-	if [ \${PORT_TYPE} = "sync" ]; then
+echo "${PORT_LIST}" | { while read PORT_ORIGIN PORT_BROKEN; do
+	if [ "\$(echo \${PORT_ORIGIN} | colrm 2)" = "#" ]; then
 		continue
 	fi
 	if [ -n "\${PORT_BROKEN}" ]; then
@@ -83,23 +80,22 @@ echo "${PORT_LIST}" | { while read PORT_NAME PORT_CAT PORT_TYPE PORT_BROKEN; do
 		done
 	fi
 
-	echo -n ">>> Building \${PORT_NAME}... "
+	echo -n ">>> Building \${PORT_ORIGIN}... "
 
-	if pkg query %n \${PORT_NAME} > /dev/null; then
+	if pkg query %o \${PORT_ORIGIN} > /dev/null; then
 		# lock the package to keep build deps
-		pkg lock -qy \${PORT_NAME}
+		pkg lock -qy \${PORT_ORIGIN}
 		echo "skipped."
 		continue
 	fi
 
 	# user configs linger somewhere else and override the override  :(
-	make -C ${PORTSDIR}/\${PORT_CAT}/\${PORT_NAME} rmconfig-recursive
-	make -C ${PORTSDIR}/\${PORT_CAT}/\${PORT_NAME} clean all install
+	make -C ${PORTSDIR}/\${PORT_ORIGIN} rmconfig-recursive
+	make -C ${PORTSDIR}/\${PORT_ORIGIN} clean all install
 
-	if pkg query %n \${PORT_NAME} > /dev/null; then
-		# ok
-	else
-		echo "\${PORT_NAME}: package names don't match"
+	if ! pkg query %o \${PORT_ORIGIN} > /dev/null; then
+		make -C ${PORTSDIR}/\${PORT_ORIGIN} deinstall
+		echo ">>> Error: origin mismatch for \${PORT_ORIGIN}"
 		exit 1
 	fi
 done }
