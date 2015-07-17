@@ -54,25 +54,6 @@ if [ -z "${PRODUCT_NAME}" -o -z "${PRODUCT_FLAVOUR}" -o -z "${PRODUCT_VERSION}" 
 	exit 1
 fi
 
-# full name for easy use and actual config directory
-export PRODUCT_RELEASE="${PRODUCT_NAME}-${PRODUCT_VERSION}_${PRODUCT_FLAVOUR}"
-
-# misc. foo
-export CONFIG_PKG="/usr/local/etc/pkg/repos/origin.conf"
-export CPUS=$(sysctl kern.smp.cpus | awk '{ print $2 }')
-export CONFIG_XML="/usr/local/etc/config.xml"
-export ARCH=${ARCH:-$(uname -m)}
-export LABEL=${PRODUCT_NAME}
-export TARGET_ARCH=${ARCH}
-export TARGETARCH=${ARCH}
-
-# define target directories
-export CONFIGDIR="${TOOLSDIR}/config/${PRODUCT_SETTINGS}"
-export STAGEDIR="/usr/local/stage"
-export IMAGESDIR="/tmp/images"
-export SETSDIR="/tmp/sets"
-export PACKAGESDIR="/.pkg"
-
 # bootstrap target directories
 mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
 
