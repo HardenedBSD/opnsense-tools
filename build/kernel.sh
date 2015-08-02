@@ -33,7 +33,7 @@ sh ./clean.sh kernel
 
 git_describe ${SRCDIR}
 
-BUILD_KERNEL="SMP"
+#BUILD_KERNEL="SMP"
 
 # XXX move config to src.git
 cp ${CONFIGDIR}/${BUILD_KERNEL} ${SRCDIR}/sys/${ARCH}/conf/${BUILD_KERNEL}

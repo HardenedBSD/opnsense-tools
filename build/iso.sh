@@ -38,6 +38,14 @@ setup_kernel ${STAGEDIR}
 setup_packages ${STAGEDIR} opnsense
 setup_mtree ${STAGEDIR}
 
+if type filesystem_populate_hook > /dev/null 2>&1; then
+	filesystem_populate_hook
+fi
+
+if type iso_populate_hook > /dev/null 2>&1; then
+	iso_populate_hook
+fi
+
 echo -n ">>> Building ISO image... "
 
 # must be upper case:

@@ -27,62 +27,26 @@
 
 set -e
 
+configfile=""
 SCRUB_ARGS=:
 
-usage()
-{
-	echo "Usage: ${0} -f flavour -n name -v version -R freebsd-ports.git" >&2
-	echo "	-C core.git -P ports.git -S src.git -T tools.git" >&2
-	exit 1
-}
-
-while getopts C:f:n:P:p:R:S:s:T:v: OPT; do
-	case ${OPT} in
-	C)
-		export COREDIR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	f)
-		export PRODUCT_FLAVOUR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	n)
-		export PRODUCT_NAME=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	P)
-		export PORTSDIR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	p)
-		export PLUGINSDIR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	R)
-		export PORTSREFDIR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	S)
-		export SRCDIR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	s)
-		export PRODUCT_SETTINGS=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	T)
-		export TOOLSDIR=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	v)
-		export PRODUCT_VERSION=${OPTARG}
-		SCRUB_ARGS=${SCRUB_ARGS};shift;shift
-		;;
-	*)
-		usage
+while getopts "c:" o; do
+	case "${o}" in
+	c)
+		configfile="${OPTARG}"
 		;;
 	esac
 done
+
+if [ -z "${configfile}" ]; then
+	echo "Configuration file required (specify with -c)"
+	exit 1
+fi
+
+if [ ! -f "${configfile}" ]; then
+	echo "Configuration file ${configfile} not found."
+	exit 1
+fi
 
 if [ -z "${PRODUCT_NAME}" -o \
     -z "${PRODUCT_FLAVOUR}" -o \
@@ -94,36 +58,12 @@ if [ -z "${PRODUCT_NAME}" -o \
     -z "${PORTSREFDIR}" -o \
     -z "${COREDIR}" -o \
     -z "${SRCDIR}" ]; then
-	usage
+	echo "Environment improperly set."
+	exit 1
 fi
-
-# full name for easy use and actual config directory
-export PRODUCT_RELEASE="${PRODUCT_NAME}-${PRODUCT_VERSION}-${PRODUCT_FLAVOUR}"
-
-# misc. foo
-export CONFIG_PKG="/usr/local/etc/pkg/repos/origin.conf"
-export CPUS=$(sysctl kern.smp.cpus | awk '{ print $2 }')
-export CONFIG_XML="/usr/local/etc/config.xml"
-export ARCH=${ARCH:-$(uname -m)}
-export LABEL=${PRODUCT_NAME}
-export TARGET_ARCH=${ARCH}
-export TARGETARCH=${ARCH}
-
-# define target directories
-export CONFIGDIR="${TOOLSDIR}/config/${PRODUCT_SETTINGS}"
-export STAGEDIR="/usr/local/stage"
-export IMAGESDIR="/tmp/images"
-export SETSDIR="/tmp/sets"
-export PACKAGESDIR="/.pkg"
 
 # bootstrap target directories
 mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
-
-# target files
-export CDROM="${IMAGESDIR}/${PRODUCT_RELEASE}-cdrom-${ARCH}.iso"
-export SERIALIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-serial-${ARCH}.img"
-export VGAIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-vga-${ARCH}.img"
-export NANOIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-nano-${ARCH}.img"
 
 # print environment to showcase all of our variables
 env | sort
