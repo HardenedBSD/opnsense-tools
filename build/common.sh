@@ -48,17 +48,46 @@ if [ ! -f "${configfile}" ]; then
 	exit 1
 fi
 
-if [ -z "${PRODUCT_NAME}" -o \
-    -z "${PRODUCT_FLAVOUR}" -o \
-    -z "${PRODUCT_VERSION}" -o \
-    -z "${PRODUCT_SETTINGS}" -o \
-    -z "${TOOLSDIR}" -o \
-    -z "${PLUGINSDIR}" -o \
-    -z "${PORTSDIR}" -o \
-    -z "${PORTSREFDIR}" -o \
-    -z "${COREDIR}" -o \
-    -z "${SRCDIR}" ]; then
-	echo "Environment improperly set."
+. ${configfile}
+
+if [ -z "${PRODUCT_NAME}" ]; then
+	echo "PRODUCT_NAME not set."
+	exit 1
+fi
+if [ -z "${PRODUCT_FLAVOUR}" ]; then
+	echo "PRODUCT_FLAVOUR not set."
+	exit 1
+fi
+if [ -z "${PRODUCT_VERSION}" ]; then
+	echo "PRODUCT_VERSION not set."
+	exit 1
+fi
+if [ -z "${PRODUCT_SETTINGS}" ]; then
+	echo "PRODUCT_SETTINGS not set."
+	exit 1
+fi
+if [ -z "${TOOLSDIR}" ]; then
+	echo "TOOLSDIR not set."
+	exit 1
+fi
+if [ -z "${PLUGINSDIR}" ]; then
+	echo "PLUGINSDIR not set."
+	exit 1
+fi
+if [ -z "${PORTSDIR}" ]; then
+	echo "PORTSDIR not set."
+	exit 1
+fi
+if [ -z "${PORTSREFDIR}" ]; then
+	echo "PORTSREFDIR not set."
+	exit 1
+fi
+if [ -z "${COREDIR}" ]; then
+	echo "COREDIR not set."
+	exit 1
+fi
+if [ -z "${SRCDIR}" ]; then
+	echo "SRCDIR not set."
 	exit 1
 fi
 

@@ -27,7 +27,7 @@
 
 set -e
 
-. ./common.sh && $(${SCRUB_ARGS})
+. ./common.sh ${@} && $(${SCRUB_ARGS})
 
 sh ./clean.sh kernel
 

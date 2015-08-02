@@ -27,7 +27,7 @@
 
 set -e
 
-. ./common.sh && $(${SCRUB_ARGS})
+. ./common.sh ${@} && $(${SCRUB_ARGS})
 
 # make sure the all-encompassing package is a release, too
 setup_stage ${STAGEDIR}
