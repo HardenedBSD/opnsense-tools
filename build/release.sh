@@ -27,7 +27,7 @@
 
 set -e
 
-. ./common.sh ${@} && $(${SCRUB_ARGS})
+. ./common.sh && $(${SCRUB_ARGS})
 
 # make sure the all-encompassing package is a release, too
 setup_stage ${STAGEDIR}
@@ -38,7 +38,7 @@ if [ ! -f ${STAGEDIR}${PACKAGESDIR}/All/opnsense-${PRODUCT_VERSION}.txz ]; then
 	exit 1
 fi
 
-sh ./clean.sh release images
+sh ./clean.sh ${@} release images
 
 echo ">>> Creating images for ${PRODUCT_RELEASE}"
 

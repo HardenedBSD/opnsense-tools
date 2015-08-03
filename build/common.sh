@@ -34,6 +34,8 @@ while getopts "c:" o; do
 	case "${o}" in
 	c)
 		configfile="${OPTARG}"
+		shift
+		shift
 		;;
 	esac
 done
@@ -343,7 +345,7 @@ EOF
 
 bundle_packages()
 {
-	sh ./clean.sh packages
+	sh ./clean.sh -c ${configfile} packages
 
 	git_describe ${PORTSDIR}
 
