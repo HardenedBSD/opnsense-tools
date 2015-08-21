@@ -32,7 +32,10 @@ set -e
 . ./common.sh ${@} && $(${SCRUB_ARGS})
 
 . ${SRCDIR}/tools/tools/nanobsd/FlashDevice.sub
-sub_FlashDevice sandisk 2g
+sub_FlashDevice generic 4g
+
+# chop off excess bytes that do not align to 8 byte boundard
+NANO_MEDIASIZE=$(expr ${NANO_MEDIASIZE} - \( ${NANO_MEDIASIZE} % 8 \))
 
 setup_stage ${STAGEDIR}
 setup_base ${STAGEDIR}
@@ -42,6 +45,7 @@ setup_packages ${STAGEDIR} opnsense
 echo "-S115200 -D" > ${STAGEDIR}/boot.config
 
 cat > ${STAGEDIR}/boot/loader.conf << EOF
+kern.geom.part.check_integrity=0
 boot_multicons="YES"
 boot_serial="YES"
 console="comconsole,vidconsole"
