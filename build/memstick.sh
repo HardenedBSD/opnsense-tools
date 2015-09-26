@@ -39,6 +39,10 @@ setup_kernel ${STAGEDIR}
 setup_packages ${STAGEDIR} opnsense
 setup_mtree ${STAGEDIR}
 
+if type filesystem_populate_hook > /dev/null 2>&1; then
+	filesystem_populate_hook
+fi
+
 echo ">>> Building memstick image(s)..."
 
 cat > ${STAGEDIR}/etc/fstab << EOF
@@ -60,10 +64,6 @@ EOF
 
 sed -i '' -e 's:</system>:<enableserial/></system>:' \
     ${STAGEDIR}${CONFIG_XML}
-
-if type filesystem_populate_hook > /dev/null 2>&1; then
-	filesystem_populate_hook
-fi
 
 if type memstick_populate_hook > /dev/null 2>&1; then
 	memstick_populate_hook

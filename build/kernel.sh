@@ -29,7 +29,7 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-sh ./clean.sh ${@} kernel
+sh ./clean.sh -c ${configfile} kernel
 
 git_describe ${SRCDIR}
 
