@@ -193,7 +193,7 @@ setup_chroot()
 setup_marker()
 {
 	# Let opnsense-update(8) know it's up to date
-	local MARKER="/usr/local/opnsense/version/os-update.${3}"
+	local MARKER="/usr/local/opnsense/version/opnsense-update.${3}"
 
 	if [ ! -f ${1}${MARKER} ]; then
 		# first call means bootstrap the marker file
@@ -240,6 +240,17 @@ setup_kernel()
 	KERNEL_VER=${KERNEL_SET##${SETSDIR}/kernel-}
 
 	setup_marker ${1} ${KERNEL_VER%%.txz} kernel
+}
+
+setup_distfiles()
+{
+	echo ">>> Setting up distfiles in ${1}"
+
+	DISTFILES_SET=$(find ${SETSDIR} -name "distfiles-*.tar")
+	if [ -n "${DISTFILES_SET}" ]; then
+		mkdir -p ${1}${PORTSDIR}
+		tar -C ${1}${PORTSDIR} -xpf ${DISTFILES_SET}
+	fi
 }
 
 extract_packages()
@@ -290,7 +301,8 @@ install_packages()
 	if [ -z "${PKGLIST}" ]; then
 		for PKG in $({
 			cd ${BASEDIR}
-			find .${PACKAGESDIR}/All -type f
+			# find all package files, omitting plugins
+			find .${PACKAGESDIR}/All -type f \! -name "os-*"
 		}); do
 			# Adds all available packages but ignores the
 			# ones that cannot be installed due to missing
@@ -313,7 +325,12 @@ install_packages()
 					PKGFOUND=${PKGFILE}
 				fi
 			done
-			pkg -c ${BASEDIR} add ${PKGFOUND}
+			if [ -n "${PKGFOUND}" ]; then
+				pkg -c ${BASEDIR} add ${PKGFOUND}
+			else
+				echo "Could not find package: ${PKG}" >&2
+				exit 1
+			fi
 		done
 	fi
 
@@ -386,7 +403,7 @@ setup_packages()
 {
 	# legacy package extract
 	extract_packages ${1}
-	install_packages ${@}
+	install_packages ${@} ${PRODUCT_TYPE}
 	clean_packages ${1}
 }
 

@@ -1,5 +1,6 @@
 STEPS=		base kernel ports core iso memstick nano \
-		regress clean release skim checkout plugins
+		regress clean release skim checkout plugins \
+		distfiles
 .PHONY:		${STEPS}
 
 PAGER?=		less
@@ -16,6 +17,7 @@ all:
 # Bootstrap the build options if not set:
 
 NAME?=		OPNsense
+TYPE?=		opnsense-devel
 FLAVOUR?=	OpenSSL
 SETTINGS?=	15.7
 _VERSION!=	date '+%Y%m%d%H%M'
@@ -45,13 +47,17 @@ ${TARGET}: ${_TARGET}
 .endif
 .endfor
 
+.if defined(VERBOSE)
+VERBOSE_FLAGS=	-x
+.endif
+
 # Expand build steps to launch into the selected
 # script with the proper build options set:
 
 .for STEP in ${STEPS}
 ${STEP}:
-	@cd build && sh ./${.TARGET}.sh \
+	@cd build && sh ${VERBOSE_FLAGS} ./${.TARGET}.sh \
 	    -f ${FLAVOUR} -n ${NAME} -v ${VERSION} -s ${SETTINGS} \
 	    -S ${SRCDIR} -P ${PORTSDIR} -p ${PLUGINSDIR} -T ${TOOLSDIR} \
-	    -C ${COREDIR} -R ${PORTSREFDIR} ${${STEP}_ARGS}
+	    -C ${COREDIR} -R ${PORTSREFDIR} -t ${TYPE} ${${STEP}_ARGS}
 .endfor

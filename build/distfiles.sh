@@ -29,46 +29,35 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-# make sure the all-encompassing package is a release, too
-setup_stage ${STAGEDIR}
-extract_packages ${STAGEDIR}
-if [ ! -f ${STAGEDIR}${PACKAGESDIR}/All/${PRODUCT_TYPE}-${PRODUCT_VERSION}.txz ]; then
-	echo "Release version mismatch:"
-	(cd ${STAGEDIR}${PACKAGESDIR}/All; ls ${PRODUCT_TYPE}-*.txz)
-	exit 1
+# clean all previous distfiles
+rm -rf ${PORTSDIR}/distfiles
+sh ./clean.sh distfiles
+
+PORT_LIST="ports-mgmt/pkg
+security/openssl
+security/libressl
+$(cat ${CONFIGDIR}/ports.conf)"
+
+git_describe ${PORTSDIR}
+
+MAKE_CONF="${CONFIGDIR}/make.conf"
+if [ -f ${MAKE_CONF} ]; then
+	cp ${MAKE_CONF} ${STAGEDIR}/etc/make.conf
 fi
 
-sh ./clean.sh ${@} release images
+echo "${PORT_LIST}" | while read PORT_ORIGIN PORT_BROKEN; do
+	if [ "$(echo ${PORT_ORIGIN} | colrm 2)" = "#" ]; then
+		continue
+	fi
 
-echo ">>> Creating images for ${PRODUCT_RELEASE}"
+	echo ">>> Fetching ${PORT_ORIGIN}..."
 
-sh ./memstick.sh
-sh ./nano.sh
-sh ./iso.sh
-
-setup_stage ${STAGEDIR}
-
-echo -n ">>> Compressing images for ${PRODUCT_RELEASE}... "
-
-mv ${IMAGESDIR}/${PRODUCT_RELEASE}-* ${STAGEDIR}
-for IMAGE in $(find ${STAGEDIR} -name "${PRODUCT_RELEASE}-*"); do
-	bzip2 ${IMAGE} &
+	make -C ${PORTSDIR}/${PORT_ORIGIN} fetch-recursive
 done
-wait
 
+echo -n ">>> Creating distfiles set... "
+tar -C ${PORTSDIR} -cf ${SETSDIR}/distfiles-${REPO_VERSION}.tar distfiles
 echo "done"
 
-echo -n ">>> Checksumming images for ${PRODUCT_RELEASE}... "
-
-mkdir -p ${STAGEDIR}/tmp
-cd ${STAGEDIR} && sha256 ${PRODUCT_RELEASE}-* > tmp/${PRODUCT_RELEASE}-checksums-${ARCH}.sha256
-cd ${STAGEDIR} && md5 ${PRODUCT_RELEASE}-* > tmp/${PRODUCT_RELEASE}-checksums-${ARCH}.md5
-
-mv tmp/* .
-rm -rf tmp
-
-echo "done"
-
-echo -n ">>> Bundling images for ${PRODUCT_RELEASE}... "
-tar -cf ${SETSDIR}/release-${PRODUCT_VERSION}-${PRODUCT_FLAVOUR}-${ARCH}.tar .
-echo "done"
+# clean up again
+rm -rf ${PORTSDIR}/distfiles
