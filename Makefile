@@ -20,6 +20,7 @@ NAME?=		OPNsense
 TYPE?=		opnsense-devel
 FLAVOUR?=	OpenSSL
 SETTINGS?=	15.7
+SIGNATURE?=	/root/repo
 _VERSION!=	date '+%Y%m%d%H%M'
 VERSION?=	${_VERSION}
 PORTSREFDIR?=	/usr/freebsd-ports
@@ -31,9 +32,9 @@ SRCDIR?=	/usr/src
 
 # A couple of meta-targets for easy use:
 
-source: base kernel
+src: base kernel
 packages: ports plugins core
-sets: source packages
+sets: src packages
 images: iso memstick nano
 everything: sets images
 
@@ -59,5 +60,6 @@ ${STEP}:
 	@cd build && sh ${VERBOSE_FLAGS} ./${.TARGET}.sh \
 	    -f ${FLAVOUR} -n ${NAME} -v ${VERSION} -s ${SETTINGS} \
 	    -S ${SRCDIR} -P ${PORTSDIR} -p ${PLUGINSDIR} -T ${TOOLSDIR} \
-	    -C ${COREDIR} -R ${PORTSREFDIR} -t ${TYPE} ${${STEP}_ARGS}
+	    -C ${COREDIR} -R ${PORTSREFDIR} -t ${TYPE} -k ${SIGNATURE} \
+	    ${${STEP}_ARGS}
 .endfor

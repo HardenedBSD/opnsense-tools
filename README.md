@@ -74,12 +74,14 @@ All build steps are invoked via make(1):
 
 Available build options are:
 
-* NAME:		"OPNsense" (default)
-* TYPE:         the name of the meta package to be installed
+* CONFIG: 	reads the below from the specified file
 * FLAVOUR:	"OpenSSL" (default), "LibreSSL"
-* VERSION:	a version tag (if applicable)
+* NAME:		"OPNsense" (default)
 * SETTINGS:	the name of the selected settings in config/
-* CONFIG: 	reads the above from the specified file
+* SIGNATURE:	file prefix to the packages signature files,
+		automatically appending ".key" and ".pub"
+* TYPE:         the name of the meta package to be installed
+* VERSION:	a version tag (if applicable)
 
 Build the userland binaries, bootloader and administrative
 files:
@@ -157,7 +159,7 @@ via the clean script:
 Available options are:
 
 * images:	remove all available images
-* source:	reset the kernel/base build directory
+* src:		reset the kernel/base build directory
 * kernel:	remove the kernel set
 * base:		remove the base set
 * packages:	remove the packages set
