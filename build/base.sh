@@ -40,8 +40,8 @@ TERM=${TERM} HOSTTYPE=${HOSTTYPE} VENDOR=${VENDOR} OSTYPE=${OSTYPE} \
 MACHTYPE=${MACHTYPE} PWD=${PWD} GROUP=${GROUP} HOST=${HOST} \
 EDITOR=${EDITOR} PAGER=${PAGER}"
 
-${ENVFILTER} make -C${SRCDIR} -j${CPUS} buildworld ${MAKEARGS} NO_CLEAN=yes
-${ENVFILTER} make -C${SRCDIR}/release obj ${MAKEARGS}
-${ENVFILTER} make -C${SRCDIR}/release base.txz ${MAKEARGS}
+${ENVFILTER} make -s -C${SRCDIR} -j${CPUS} buildworld ${MAKEARGS}
+${ENVFILTER} make -s -C${SRCDIR}/release obj ${MAKEARGS}
+${ENVFILTER} make -s -C${SRCDIR}/release base.txz ${MAKEARGS}
 
-mv $(make -C${SRCDIR}/release -V .OBJDIR)/base.txz ${SETSDIR}/base-${REPO_VERSION}-${ARCH}.txz
+mv /usr/obj/usr/src/release/base.txz ${SETSDIR}/base-${REPO_VERSION}-${ARCH}.txz

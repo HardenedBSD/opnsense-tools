@@ -40,8 +40,8 @@ cp ${CONFIGDIR}/${BUILD_KERNEL} ${SRCDIR}/sys/${ARCH}/conf/${BUILD_KERNEL}
 
 MAKEARGS="TARGET_ARCH=${ARCH} KERNCONF=${BUILD_KERNEL}"
 
-make -C${SRCDIR} -j${CPUS} buildkernel ${MAKEARGS} NO_KERNELCLEAN=yes
-make -C${SRCDIR}/release obj ${MAKEARGS}
-make -C${SRCDIR}/release kernel.txz ${MAKEARGS}
+make -s -C${SRCDIR} -j${CPUS} buildkernel ${MAKEARGS}
+make -s -C${SRCDIR}/release obj ${MAKEARGS}
+make -s -C${SRCDIR}/release kernel.txz ${MAKEARGS}
 
 mv $(make -C${SRCDIR}/release -V .OBJDIR)/kernel.txz ${SETSDIR}/kernel-${REPO_VERSION}-${ARCH}.txz
