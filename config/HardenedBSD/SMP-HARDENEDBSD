@@ -75,7 +75,6 @@ device		bpf
 device          carp
 device          pf
 device          pflog
-device          pfsync
 device          vlan
 device          gre
 
