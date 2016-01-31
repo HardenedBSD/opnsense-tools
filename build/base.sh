@@ -27,7 +27,7 @@
 
 set -e
 
-. ./common.sh && $(${SCRUB_ARGS})
+. ./common.sh ${@} && $(${SCRUB_ARGS})
 
 git_describe ${SRCDIR}
 
@@ -38,7 +38,7 @@ if [ -f ${BASESET}.txz ]; then
 	exit 0
 fi
 
-sh ./clean.sh base
+sh ./clean.sh -c ${configfile} base
 
 MAKEARGS="SRCCONF=${CONFIGDIR}/src.conf COMPILER_TYPE=clang __MAKE_CONF="
 ENVFILTER="env -i USER=${USER} LOGNAME=${LOGNAME} HOME=${HOME} \
@@ -47,11 +47,11 @@ TERM=${TERM} HOSTTYPE=${HOSTTYPE} VENDOR=${VENDOR} OSTYPE=${OSTYPE} \
 MACHTYPE=${MACHTYPE} PWD=${PWD} GROUP=${GROUP} HOST=${HOST} \
 EDITOR=${EDITOR} PAGER=${PAGER}"
 
-${ENVFILTER} make -C${SRCDIR} -j${CPUS} buildworld ${MAKEARGS} NO_CLEAN=yes
-${ENVFILTER} make -C${SRCDIR}/release obj ${MAKEARGS}
-${ENVFILTER} make -C${SRCDIR}/release base.txz ${MAKEARGS}
+${ENVFILTER} make -s -C${SRCDIR} -j${CPUS} buildworld ${MAKEARGS}
+${ENVFILTER} make -s -C${SRCDIR}/release obj ${MAKEARGS}
+${ENVFILTER} make -s -C${SRCDIR}/release base.txz ${MAKEARGS}
 
-mv $(make -C${SRCDIR}/release -V .OBJDIR)/base.txz ${BASESET}.txz
+mv /usr/obj/usr/src/release/base.txz ${BASESET}.txz
 
 echo -n ">>> Generating obsolete file list... "
 

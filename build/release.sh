@@ -38,7 +38,7 @@ if [ ! -f ${STAGEDIR}${PACKAGESDIR}/All/${PRODUCT_TYPE}-${PRODUCT_VERSION}.txz ]
 	exit 1
 fi
 
-sh ./clean.sh release
+sh ./clean.sh -c ${configfile} release
 
 setup_stage ${STAGEDIR}
 

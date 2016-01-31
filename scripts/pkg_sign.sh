@@ -3,8 +3,8 @@
 read -t 2 SUM
 [ -z "${SUM}" ] && exit 1
 echo SIGNATURE
-echo -n ${SUM} | openssl dgst -sign ${PRODUCT_SIGNATURE}.key -sha256 -binary
+echo -n ${SUM} | openssl dgst -sign ${PKG_PRIVKEY}.key -sha256 -binary
 echo
 echo CERT
-cat ${PRODUCT_SIGNATURE}.pub
+cat ${PKG_PUBKEY}
 echo END

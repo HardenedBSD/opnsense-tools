@@ -36,13 +36,20 @@ VGAIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-vga-${ARCH}.img"
 # rewrite the disk label, because we're install media
 LABEL="${LABEL}_Install"
 
-sh ./clean.sh memstick
+sh ./clean.sh -c ${configfile} memstick
 
 setup_stage ${STAGEDIR}
 setup_base ${STAGEDIR}
 setup_kernel ${STAGEDIR}
 setup_packages ${STAGEDIR}
 setup_mtree ${STAGEDIR}
+
+dd if=/dev/urandom of=${STAGEDIR}/boot/entropy bs=4k count=1
+chmod 000 ${STAGEDIR}/boot/entropy
+
+if type filesystem_populate_hook > /dev/null 2>&1; then
+	filesystem_populate_hook
+fi
 
 echo ">>> Building memstick image(s)..."
 
@@ -66,7 +73,11 @@ EOF
 sed -i '' -e 's:</system>:<enableserial/></system>:' \
     ${STAGEDIR}${CONFIG_XML}
 
-sed -i '' -Ee 's:^ttyu0:ttyu0	"/usr/libexec/getty std.9600"	cons25	on  secure:' ${STAGEDIR}/etc/ttys
+if type memstick_populate_hook > /dev/null 2>&1; then
+	memstick_populate_hook
+else
+	sed -i '' -Ee 's:^ttyu0:ttyu0	"/usr/libexec/getty std.115200"	vt100	on  secure:' ${STAGEDIR}/etc/ttys
+fi
 
 makefs -t ffs -B little -o label=${LABEL} ${SERIALIMG} ${STAGEDIR}
 

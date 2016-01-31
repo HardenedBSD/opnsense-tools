@@ -42,6 +42,17 @@ setup_kernel ${STAGEDIR}
 setup_packages ${STAGEDIR}
 setup_mtree ${STAGEDIR}
 
+dd if=/dev/urandom of=${STAGEDIR}/boot/entropy bs=4k count=1
+chmod 000 ${STAGEDIR}/boot/entropy
+
+if type filesystem_populate_hook > /dev/null 2>&1; then
+	filesystem_populate_hook
+fi
+
+if type iso_populate_hook > /dev/null 2>&1; then
+	iso_populate_hook
+fi
+
 echo -n ">>> Building ISO image... "
 
 # must be upper case:

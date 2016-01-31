@@ -29,7 +29,7 @@
 
 set -e
 
-. ./common.sh && $(${SCRUB_ARGS})
+. ./common.sh ${@} && $(${SCRUB_ARGS})
 
 NANOIMG="${IMAGESDIR}/${PRODUCT_RELEASE}-nano-${ARCH}.img"
 
