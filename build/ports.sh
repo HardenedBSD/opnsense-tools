@@ -44,7 +44,6 @@ setup_distfiles ${STAGEDIR}
 extract_packages ${STAGEDIR}
 remove_packages ${STAGEDIR} ${@}
 install_packages ${STAGEDIR}
-clean_packages ${STAGEDIR}
 
 echo ">>> Building packages..."
 
@@ -92,7 +91,6 @@ echo "${PORTS_LIST}" | while read PORT_ORIGIN PORT_BROKEN; do
 		continue
 	fi
 
-	# user configs linger somewhere else and override the override  :(
 	make -C ${PORTSDIR}/\${PORT_ORIGIN} clean all install
 
 	if ! pkg query %o \${PORT_ORIGIN} > /dev/null; then
@@ -110,7 +108,7 @@ echo ">>> Creating binary packages..."
 
 chroot ${STAGEDIR} /bin/sh -es << EOF && bundle_packages ${STAGEDIR} ${PORTS_MARKER}
 pkg autoremove -qy
-pkg create -ao ${PACKAGESDIR}/All -f txz
+pkg create -nao ${PACKAGESDIR}/All -f txz
 EOF
 
 if [ -z "${PORTS_MARKER}" ]; then

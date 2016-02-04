@@ -76,10 +76,11 @@ Available build options are:
 
 * CONFIG: 	reads the below from the specified file
 * FLAVOUR:	"OpenSSL" (default), "LibreSSL"
+* MIRRORS:	a list of mirrors to prefetch sets from
 * NAME:		"OPNsense" (default)
+* PRIVKEY:	the private key for signing sets
+* PUBKEY:	the public key for signing sets
 * SETTINGS:	the name of the selected settings in config/
-* SIGNATURE:	file prefix to the packages signature files,
-		automatically appending ".key" and ".pub"
 * TYPE:         the name of the meta package to be installed
 * VERSION:	a version tag (if applicable)
 
@@ -135,8 +136,8 @@ distribution files before running the actual build:
 
     # make distfiles
 
-Compiled base and kernel sets can be prefetched from a mirror,
-while removing any previously available set:
+Compiled sets can be prefetched from a mirror, while removing
+any previously available set:
 
     # make prefetch-<option>[,...] VERSION=version.to.prefetch
 

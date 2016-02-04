@@ -1,10 +1,13 @@
 #!/bin/sh
 
+PUBKEY=${1}
+PRIVKEY=${2}
+
 read -t 2 SUM
 [ -z "${SUM}" ] && exit 1
 echo SIGNATURE
-echo -n ${SUM} | openssl dgst -sign ${PKG_PRIVKEY}.key -sha256 -binary
+echo -n ${SUM} | openssl dgst -sign ${PRIVKEY} -sha256 -binary
 echo
 echo CERT
-cat ${PKG_PUBKEY}
+cat ${PUBKEY}
 echo END

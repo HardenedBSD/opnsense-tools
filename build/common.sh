@@ -215,10 +215,11 @@ setup_distfiles()
 generate_signature()
 {
 	SIGNCMD="${TOOLSDIR}/scripts/pkg_sign.sh"
+	SIGNKEYS="${PRODUCT_PUBKEY} ${PRODUCT_PRIVKEY}"
 
-	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh)" ]; then
+	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh ${SIGNKEYS})" ]; then
 		echo -n "Signing $(basename ${1})... "
-		sha256 -q ${1} | ${SIGNCMD} > ${1}.sig
+		sha256 -q ${1} | ${SIGNCMD} ${SIGNKEYS} > ${1}.sig
 		echo "done"
 	fi
 }
@@ -257,11 +258,11 @@ extract_packages()
 
 remove_packages()
 {
-	echo ">>> Removing packages in ${1}"
-
 	BASEDIR=${1}
 	shift
 	PKGLIST=${@}
+
+	echo ">>> Removing packages in ${BASEDIR}: ${PKGLIST}"
 
 	for PKG in ${PKGLIST}; do
 		# clear out the ports that ought to be rebuilt
@@ -291,10 +292,12 @@ install_packages()
 			# find all package files, omitting plugins
 			find .${PACKAGESDIR}/All -type f \! -name "os-*"
 		}); do
-			# Adds all available packages but ignores the
+			# Adds all available packages and removes the
 			# ones that cannot be installed due to missing
 			# dependencies.  This behaviour is desired.
-			pkg -c ${BASEDIR} add ${PKG} || true
+			if ! pkg -c ${BASEDIR} add ${PKG}; then
+				rm -r ${BASEDIR}/${PKG}
+			fi
 		done
 	else
 		# always bootstrap pkg as the first package
@@ -380,15 +383,16 @@ bundle_packages()
 	# needed bootstrap glue when no packages are on the system
 	(cd ${BASEDIR}${PACKAGESDIR}-new/Latest; ln -s ../All/pkg-*.txz pkg.txz)
 
-	local SIGNARGS=
-	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh)" ]; then
-		# XXX check if fingerprint is in core.git
-		local SIGNCMD="${TOOLSDIR}/scripts/pkg_sign.sh"
-		SIGNARGS="signing_command: ${SIGNCMD}"
+	SIGNCMD="${TOOLSDIR}/scripts/pkg_sign.sh"
+	SIGNKEYS="${PRODUCT_PUBKEY} ${PRODUCT_PRIVKEY}"
+	SIGNARGS=
 
-		# generate pkg bootstrap signature
-		generate_signature ${BASEDIR}${PACKAGESDIR}-new/Latest/pkg.txz
+	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh ${SIGNKEYS})" ]; then
+		SIGNARGS="signing_command: ${SIGNCMD} ${SIGNKEYS}"
 	fi
+
+	# generate pkg bootstrap signature
+	generate_signature ${BASEDIR}${PACKAGESDIR}-new/Latest/pkg.txz
 
 	# generate index files
 	pkg repo ${BASEDIR}${PACKAGESDIR}-new/ ${SIGNARGS}

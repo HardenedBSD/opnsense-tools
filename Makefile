@@ -20,9 +20,16 @@ NAME?=		OPNsense
 TYPE?=		opnsense-devel
 FLAVOUR?=	OpenSSL
 SETTINGS?=	16.1
-SIGNATURE?=	/root/repo
+MIRRORS?=	https://opnsense.c0urier.net \
+		http://mirrors.nycbug.org/pub/opnsense \
+		http://mirror.wdc1.us.leaseweb.net/opnsense \
+		http://mirror.sfo12.us.leaseweb.net/opnsense \
+		http://mirror.fra10.de.leaseweb.net/opnsense \
+		http://mirror.ams1.nl.leaseweb.net/opnsense
 _VERSION!=	date '+%Y%m%d%H%M'
 VERSION?=	${_VERSION}
+PRIVKEY?=	/root/repo.key
+PUBKEY?=	/root/repo.pub
 PORTSREFDIR?=	/usr/freebsd-ports
 PLUGINSDIR?=	/usr/plugins
 TOOLSDIR?=	/usr/tools
@@ -30,11 +37,13 @@ PORTSDIR?=	/usr/ports
 COREDIR?=	/usr/core
 SRCDIR?=	/usr/src
 
-# A couple of meta-targets for easy use:
+# A couple of meta-targets for easy use and ordering:
 
-src: base kernel
-packages: ports plugins core
-sets iso memstick nano: src packages
+ports: base
+plugins: ports
+core: plugins
+packages: core
+iso memstick nano: packages kernel
 everything release: iso memstick nano
 
 # Expand target arguments for the script append:
@@ -59,6 +68,6 @@ ${STEP}:
 	@cd build && sh ${VERBOSE_FLAGS} ./${.TARGET}.sh \
 	    -f ${FLAVOUR} -n ${NAME} -v ${VERSION} -s ${SETTINGS} \
 	    -S ${SRCDIR} -P ${PORTSDIR} -p ${PLUGINSDIR} -T ${TOOLSDIR} \
-	    -C ${COREDIR} -R ${PORTSREFDIR} -t ${TYPE} -k ${SIGNATURE} \
-	    ${${STEP}_ARGS}
+	    -C ${COREDIR} -R ${PORTSREFDIR} -t ${TYPE} -k ${PRIVKEY} \
+	    -K ${PUBKEY} -m ${MIRRORS:Ox:[1]} ${${STEP}_ARGS}
 .endfor
