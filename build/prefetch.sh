@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2014-2016 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2016 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -27,31 +27,27 @@
 
 set -e
 
-. ./common.sh ${@} && $(${SCRUB_ARGS})
+. ./common.sh && $(${SCRUB_ARGS})
 
-KERNEL_SET=$(find ${SETSDIR} -name "kernel-*-${ARCH}.txz")
+MIRROR="https://pkg.opnsense.org/sets"
 
-if [ -f "${KERNEL_SET}" -a -z "${1}" ]; then
-	echo ">>> Reusing kernel set: ${KERNEL_SET}"
-	exit 0
-fi
-
-git_describe ${SRCDIR}
-
-KERNEL_SET=${SETSDIR}/kernel-${REPO_VERSION}-${ARCH}
-
-sh ./clean.sh -c ${configfile} kernel
-
-#BUILD_KERNEL="SMP"
-
-cp ${CONFIGDIR}/${BUILD_KERNEL} ${SRCDIR}/sys/${ARCH}/conf/${BUILD_KERNEL}
-
-MAKE_ARGS="TARGET_ARCH=${ARCH} KERNCONF=${BUILD_KERNEL}"
-
-make -s -C${SRCDIR} -j${CPUS} buildkernel ${MAKE_ARGS}
-make -s -C${SRCDIR}/release obj ${MAKE_ARGS}
-make -s -C${SRCDIR}/release kernel.txz ${MAKE_ARGS}
-
-mv $(make -C${SRCDIR}/release -V .OBJDIR)/kernel.txz ${KERNEL_SET}.txz
-
-generate_signature ${KERNEL_SET}.txz
+for ARG in ${@}; do
+	case ${ARG} in
+	base)
+		sh ./clean.sh ${ARG}
+		URL="${MIRROR}/${ARG}-${PRODUCT_VERSION}-${ARCH}"
+		fetch -o ${SETSDIR} ${URL}.obsolete
+		fetch -o ${SETSDIR} ${URL}.txz
+		;;
+	kernel)
+		sh ./clean.sh ${ARG}
+		URL="${MIRROR}/${ARG}-${PRODUCT_VERSION}-${ARCH}"
+		fetch -o ${SETSDIR} ${URL}.txz
+		;;
+	packages)
+		sh ./clean.sh ${ARG}
+		URL="${MIRROR}/${ARG}-${PRODUCT_VERSION}-${PRODUCT_FLAVOUR}-${ARCH}"
+		fetch -o ${SETSDIR} ${URL}.tar
+		;;
+	esac
+done
