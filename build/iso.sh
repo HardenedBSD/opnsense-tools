@@ -41,6 +41,7 @@ setup_base ${STAGEDIR}
 setup_kernel ${STAGEDIR}
 setup_packages ${STAGEDIR}
 setup_mtree ${STAGEDIR}
+setup_entropy ${STAGEDIR}
 
 dd if=/dev/urandom of=${STAGEDIR}/boot/entropy bs=4k count=1
 chmod 000 ${STAGEDIR}/boot/entropy

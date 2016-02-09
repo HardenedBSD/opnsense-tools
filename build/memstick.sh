@@ -59,6 +59,8 @@ cat > ${STAGEDIR}/etc/fstab << EOF
 tmpfs		/tmp		tmpfs	rw,mode=01777	0	0
 EOF
 
+setup_entropy ${STAGEDIR}
+
 makefs -t ffs -B little -o label=${LABEL} ${VGAIMG} ${STAGEDIR}
 
 echo "-S115200 -D" > ${STAGEDIR}/boot.config
@@ -78,6 +80,8 @@ if type memstick_populate_hook > /dev/null 2>&1; then
 else
 	sed -i '' -Ee 's:^ttyu0:ttyu0	"/usr/libexec/getty std.115200"	vt100	on  secure:' ${STAGEDIR}/etc/ttys
 fi
+
+setup_entropy ${STAGEDIR}
 
 makefs -t ffs -B little -o label=${LABEL} ${SERIALIMG} ${STAGEDIR}
 
