@@ -1,12 +1,17 @@
-STEPS=		base clean core distfiles kernel iso \
-		memstick nano plugins ports prefetch \
-		rebase regress release skim
+STEPS=		base chroot clean core distfiles kernel iso \
+		memstick nano plugins ports prefetch rebase \
+		regress release skim
 .PHONY:		${STEPS}
 
 PAGER?=		less
 
 all:
 	@cat ${.CURDIR}/README.md | ${PAGER}
+
+lint:
+. for STEP in ${STEPS}
+	@sh -n ${.CURDIR}/build/${STEP}.sh
+. endfor
 
 # Load the custom options from a file:
 
@@ -30,6 +35,7 @@ _VERSION!=	date '+%Y%m%d%H%M'
 VERSION?=	${_VERSION}
 PRIVKEY?=	/root/repo.key
 PUBKEY?=	/root/repo.pub
+STAGEDIRPREFIX?=/usr/obj
 PORTSREFDIR?=	/usr/freebsd-ports
 PLUGINSDIR?=	/usr/plugins
 TOOLSDIR?=	/usr/tools
@@ -64,10 +70,11 @@ VERBOSE_FLAGS=	-x
 # script with the proper build options set:
 
 .for STEP in ${STEPS}
-${STEP}:
-	@cd build && sh ${VERBOSE_FLAGS} ./${.TARGET}.sh \
+${STEP}: lint
+	@cd ${.CURDIR}/build && sh ${VERBOSE_FLAGS} ./${.TARGET}.sh \
 	    -f ${FLAVOUR} -n ${NAME} -v ${VERSION} -s ${SETTINGS} \
 	    -S ${SRCDIR} -P ${PORTSDIR} -p ${PLUGINSDIR} -T ${TOOLSDIR} \
 	    -C ${COREDIR} -R ${PORTSREFDIR} -t ${TYPE} -k ${PRIVKEY} \
-	    -K ${PUBKEY} -m ${MIRRORS:Ox:[1]} ${${STEP}_ARGS}
+	    -K ${PUBKEY} -l "${SIGNCHK}" -L "${SIGNCMD}" \
+	    -m ${MIRRORS:Ox:[1]} -o "${STAGEDIRPREFIX}" ${${STEP}_ARGS}
 .endfor

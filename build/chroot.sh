@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (c) 2015-2016 Franco Fichtner <franco@opnsense.org>
+# Copyright (c) 2016 Franco Fichtner <franco@opnsense.org>
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -29,55 +29,6 @@ set -e
 
 . ./common.sh && $(${SCRUB_ARGS})
 
-PORTS_LIST="ports-mgmt/pkg
-security/openssl
-security/libressl
-$(cat ${CONFIGDIR}/ports.conf)"
+echo ">>> chroot'ing into ${STAGEDIR}..."
 
-setup_stage ${STAGEDIR}
-setup_base ${STAGEDIR}
-setup_clone ${STAGEDIR} ${PORTSDIR}
-setup_clone ${STAGEDIR} ${SRCDIR}
-setup_chroot ${STAGEDIR}
-setup_distfiles ${STAGEDIR}
-
-git_describe ${PORTSDIR}
-
-echo ">>> Fetching distfiles..."
-
-MAKE_CONF="${CONFIGDIR}/make.conf"
-if [ -f ${MAKE_CONF} ]; then
-	cp ${MAKE_CONF} ${STAGEDIR}/etc/make.conf
-fi
-
-echo "CLEAN_FETCH_ENV=yes" >> ${STAGEDIR}/etc/make.conf
-
-# block SIGINT to allow for collecting port progress (use with care)
-trap : 2
-
-if ! chroot ${STAGEDIR} /bin/sh -es << EOF; then PORTS_LIST=; fi
-echo "${PORTS_LIST}" | while read PORT_ORIGIN PORT_BROKEN; do
-	if [ "\$(echo \${PORT_ORIGIN} | colrm 2)" = "#" ]; then
-		continue
-	fi
-
-	echo ">>> Fetching \${PORT_ORIGIN}..."
-
-	make -C ${PORTSDIR}/\${PORT_ORIGIN} fetch-recursive
-done
-EOF
-
-# unblock SIGINT
-trap - 2
-
-sh ./clean.sh distfiles
-
-echo -n ">>> Creating distfiles set... "
-tar -C ${STAGEDIR}${PORTSDIR} -cf \
-    ${SETSDIR}/distfiles-${REPO_VERSION}.tar distfiles
-echo "done"
-
-if [ -z "${PORTS_LIST}" ]; then
-	echo ">>> The distfiles fetch did not finish properly :("
-	exit 1
-fi
+chroot ${STAGEDIR} /bin/csh

@@ -231,12 +231,9 @@ setup_entropy()
 
 generate_signature()
 {
-	SIGNCMD="${TOOLSDIR}/scripts/pkg_sign.sh"
-	SIGNKEYS="${PRODUCT_PUBKEY} ${PRODUCT_PRIVKEY}"
-
-	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh ${SIGNKEYS})" ]; then
+	if [ -n "$(${PRODUCT_SIGNCHK})" ]; then
 		echo -n "Signing $(basename ${1})... "
-		sha256 -q ${1} | ${SIGNCMD} ${SIGNKEYS} > ${1}.sig
+		sha256 -q ${1} | ${PRODUCT_SIGNCMD} > ${1}.sig
 		echo "done"
 	fi
 }
@@ -400,12 +397,10 @@ bundle_packages()
 	# needed bootstrap glue when no packages are on the system
 	(cd ${BASEDIR}${PACKAGESDIR}-new/Latest; ln -s ../All/pkg-*.txz pkg.txz)
 
-	SIGNCMD="${TOOLSDIR}/scripts/pkg_sign.sh"
-	SIGNKEYS="${PRODUCT_PUBKEY} ${PRODUCT_PRIVKEY}"
 	SIGNARGS=
 
-	if [ -n "$(${TOOLSDIR}/scripts/pkg_fingerprint.sh ${SIGNKEYS})" ]; then
-		SIGNARGS="signing_command: ${SIGNCMD} ${SIGNKEYS}"
+	if [ -n "$(${PRODUCT_SIGNCHK})" ]; then
+		SIGNARGS="signing_command: ${PRODUCT_SIGNCMD}"
 	fi
 
 	# generate pkg bootstrap signature
