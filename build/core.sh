@@ -47,15 +47,24 @@ else
 fi
 
 for CORE_TAG in ${CORE_TAGS}; do
+	CORE_NAME=${PRODUCT_TYPE}
+	CORE_FAMILY="release"
+	CORE_ARGS="CORE_NAME=${CORE_NAME} CORE_FAMILY=${CORE_FAMILY}"
+
 	if [ -n "${*}" ]; then
 		setup_copy ${STAGEDIR} ${COREDIR}
 		git_checkout ${STAGEDIR}${COREDIR} ${CORE_TAG}
+		git_describe ${STAGEDIR}${COREDIR} ${CORE_TAG}
+		if [ "${REPO_REFTYPE}" != tag ]; then
+			CORE_NAME=$(make -C ${STAGEDIR}${COREDIR} name)
+			CORE_ARGS=
+		fi
 	fi
-	CORE_NAME=$(make -C ${STAGEDIR}${COREDIR} name)
+
 	CORE_DEPS=$(make -C ${STAGEDIR}${COREDIR} depends)
 	remove_packages ${STAGEDIR} ${CORE_NAME}
 	install_packages ${STAGEDIR} git gettext-tools ${CORE_DEPS}
-	custom_packages ${STAGEDIR} ${COREDIR}
+	custom_packages ${STAGEDIR} ${COREDIR} "${CORE_ARGS}"
 done
 
 bundle_packages ${STAGEDIR} ${CORE_MARKER}

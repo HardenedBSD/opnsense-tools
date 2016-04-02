@@ -51,7 +51,6 @@ if [ ! -f "${configfile}" ]; then
 fi
 
 . ${configfile}
-
 # bootstrap target directories
 mkdir -p ${STAGEDIR} ${IMAGESDIR} ${SETSDIR}
 
@@ -78,9 +77,13 @@ git_update()
 
 git_describe()
 {
-	VERSION=$(git -C ${1} describe --abbrev=0 --always)
-	REVISION=$(git -C ${1} rev-list ${VERSION}.. --count)
-	COMMENT=$(git -C ${1} rev-list HEAD --max-count=1 | cut -c1-9)
+	HEAD=${2:-"HEAD"}
+
+	VERSION=$(git -C ${1} describe --abbrev=0 --always ${HEAD})
+	REVISION=$(git -C ${1} rev-list --count ${VERSION}..${HEAD})
+	COMMENT=$(git -C ${1} rev-list --max-count=1 ${HEAD} | cut -c1-9)
+	REFTYPE=$(git -C ${1} cat-file -t ${HEAD})
+
 	if [ "${REVISION}" != "0" ]; then
 		# must construct full version string manually
 		VERSION=${VERSION}_${REVISION}
@@ -88,6 +91,7 @@ git_describe()
 
 	export REPO_VERSION=${VERSION}
 	export REPO_COMMENT=${COMMENT}
+	export REPO_REFTYPE=${REFTYPE}
 }
 
 git_tag()
@@ -355,12 +359,12 @@ custom_packages()
 rm -rf ${1}
 
 # run the package build process
-make -C ${2} DESTDIR=${1} FLAVOUR=${PRODUCT_FLAVOUR} install
-make -C ${2} DESTDIR=${1} scripts
-make -C ${2} DESTDIR=${1} manifest > ${1}/+MANIFEST
-make -C ${2} DESTDIR=${1} plist > ${1}/plist
+make -C ${2} DESTDIR=${1} ${3} FLAVOUR=${PRODUCT_FLAVOUR} install
+make -C ${2} DESTDIR=${1} ${3} scripts
+make -C ${2} DESTDIR=${1} ${3} manifest > ${1}/+MANIFEST
+make -C ${2} DESTDIR=${1} ${3} plist > ${1}/plist
 
-echo -n ">>> Creating custom package for \$(make -C ${2} name)... "
+echo -n ">>> Creating custom package for ${2}... "
 pkg create -m ${1} -r ${1} -p ${1}/plist -o ${PACKAGESDIR}/All
 echo "done"
 EOF
